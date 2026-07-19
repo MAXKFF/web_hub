@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>FC Online Simulator</title>
+    <style>
+        body { font-family: sans-serif; background: #1a1a1a; color: white; margin: 0; }
+        nav { background: #333; padding: 15px; display: flex; gap: 20px; align-items: center; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; padding: 20px; }
+        .card { background: #2a2a2a; padding: 10px; text-align: center; border-radius: 8px; }
+        .card img { width: 100px; height: 100px; background: #444; }
+        button { cursor: pointer; padding: 5px 10px; background: #007bff; border: none; color: white; border-radius: 4px; }
+    </style>
+</head>
+<body>
+
+<nav>
+    <h2>FC Simulator</h2>
+    <button onclick="show('shop')">Shop TTCN</button>
+    <button onclick="show('team')">Đội hình của tôi</button>
+    <div id="balance">BP: 100,000,000</div>
+</nav>
+
+<div id="shop" class="view">
+    <div class="grid" id="shop-list"></div>
+</div>
+
+<div id="team" class="view" style="display:none;">
+    <div class="grid" id="team-list"></div>
+</div>
+
+<script>
+    // Dữ liệu cầu thủ (Bạn có thể mở rộng danh sách này)
+    const players = [
+        { id: 1, name: "Ronaldo", season: "ICON", price: 5000000, img: "https://via.placeholder.com/100" },
+        { id: 2, name: "Messi", season: "23TY", price: 4000000, img: "https://via.placeholder.com/100" },
+        { id: 3, name: "Mbappe", season: "24TOTY", price: 8000000, img: "https://via.placeholder.com/100" }
+    ];
+
+    let myTeam = JSON.parse(localStorage.getItem('myTeam')) || [];
+    let balance = 100000000;
+
+    function show(view) {
+        document.querySelectorAll('.view').forEach(v => v.style.display = 'none');
+        document.getElementById(view).style.display = 'block';
+        if(view === 'team') renderTeam();
+    }
+
+    function renderShop() {
+        const list = document.getElementById('shop-list');
+        players.forEach(p => {
+            list.innerHTML += `
+                <div class="card">
+                    <img src="${p.img}">
+                    <p>${p.name}<br><small>${p.season}</small></p>
+                    <p>${p.price.toLocaleString()} BP</p>
+                    <button onclick="buy(${p.id})">Mua</button>
+                </div>
+            `;
+        });
+    }
+
+    function renderTeam() {
+        const list = document.getElementById('team-list');
+        list.innerHTML = myTeam.length ? "" : "<p>Đội hình trống</p>";
+        myTeam.forEach(p => {
+            list.innerHTML += `
+                <div class="card">
+                    <img src="${p.img}">
+                    <p>${p.name}<br>${p.season}</p>
+                </div>
+            `;
+        });
+    }
+
+    function buy(id) {
+        const p = players.find(x => x.id === id);
+        if (balance >= p.price) {
+            balance -= p.price;
+            myTeam.push(p);
+            localStorage.setItem('myTeam', JSON.stringify(myTeam));
+            document.getElementById('balance').innerText = `BP: ${balance.toLocaleString()}`;
+            alert("Đã chiêu mộ thành công!");
+        } else {
+            alert("Không đủ BP!");
+        }
+    }
+
+    renderShop();
+</script>
+</body>
+</html>
