@@ -2,23 +2,27 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>FC Online Simulator</title>
+    <title>FC Online Simulator - Pro Version</title>
     <style>
-        body { font-family: sans-serif; background: #1a1a1a; color: white; margin: 0; }
-        nav { background: #333; padding: 15px; display: flex; gap: 20px; align-items: center; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; padding: 20px; }
-        .card { background: #2a2a2a; padding: 10px; text-align: center; border-radius: 8px; }
-        .card img { width: 100px; height: 100px; background: #444; }
-        button { cursor: pointer; padding: 5px 10px; background: #007bff; border: none; color: white; border-radius: 4px; }
+        body { font-family: 'Segoe UI', sans-serif; background: #121212; color: white; margin: 0; }
+        nav { background: #1f1f1f; padding: 15px; display: flex; gap: 15px; align-items: center; border-bottom: 2px solid #007bff; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 15px; padding: 20px; }
+        .card { background: #2a2a2a; padding: 10px; text-align: center; border-radius: 8px; border: 1px solid #444; }
+        .upgrade-area { padding: 20px; background: #222; margin: 20px; border-radius: 10px; }
+        button { cursor: pointer; padding: 8px 12px; background: #007bff; border: none; color: white; border-radius: 4px; font-weight: bold; }
+        .btn-add { background: #28a745; }
+        .lvl { color: gold; font-weight: bold; }
     </style>
 </head>
 <body>
 
 <nav>
-    <h2>FC Simulator</h2>
-    <button onclick="show('shop')">Shop TTCN</button>
-    <button onclick="show('team')">Đội hình của tôi</button>
+    <h2>FC Sim Pro</h2>
+    <button onclick="show('shop')">Shop</button>
+    <button onclick="show('team')">Đội hình</button>
+    <button onclick="show('upgrade')">Nâng cấp</button>
     <div id="balance">BP: 100,000,000</div>
+    <button class="btn-add" onclick="addBP()">Add 100,000T BP</button>
 </nav>
 
 <div id="shop" class="view">
@@ -29,64 +33,78 @@
     <div class="grid" id="team-list"></div>
 </div>
 
-<script>
-    // Dữ liệu cầu thủ (Bạn có thể mở rộng danh sách này)
-    const players = [
-        { id: 1, name: "Ronaldo", season: "ICON", price: 5000000, img: "https://via.placeholder.com/100" },
-        { id: 2, name: "Messi", season: "23TY", price: 4000000, img: "https://via.placeholder.com/100" },
-        { id: 3, name: "Mbappe", season: "24TOTY", price: 8000000, img: "https://via.placeholder.com/100" }
-    ];
+<div id="upgrade" class="view" style="display:none;">
+    <div class="upgrade-area">
+        <h3>Nâng cấp cầu thủ (Tỉ lệ 100%)</h3>
+        <select id="select-main"></select>
+        <select id="select-fodder"><option value="0">Thêm phôi (Ngang OVR = +1 vạch)</option></select>
+        <button onclick="upgradePlayer()">Bấm Nâng Cấp!</button>
+        <p id="upgrade-status"></p>
+    </div>
+</div>
 
+<script>
+    let players = [
+        { id: 1, name: "Ronaldo", ovr: 110, price: 5000000, lvl: 1 },
+        { id: 2, name: "Messi", ovr: 108, price: 4000000, lvl: 1 }
+    ];
     let myTeam = JSON.parse(localStorage.getItem('myTeam')) || [];
     let balance = 100000000;
 
+    function addBP() { balance += 100000000000; updateUI(); }
+    
     function show(view) {
         document.querySelectorAll('.view').forEach(v => v.style.display = 'none');
         document.getElementById(view).style.display = 'block';
+        if(view === 'upgrade') populateUpgrade();
         if(view === 'team') renderTeam();
     }
 
-    function renderShop() {
-        const list = document.getElementById('shop-list');
-        players.forEach(p => {
-            list.innerHTML += `
-                <div class="card">
-                    <img src="${p.img}">
-                    <p>${p.name}<br><small>${p.season}</small></p>
-                    <p>${p.price.toLocaleString()} BP</p>
-                    <button onclick="buy(${p.id})">Mua</button>
-                </div>
-            `;
-        });
+    function updateUI() {
+        document.getElementById('balance').innerText = `BP: ${balance.toLocaleString()}`;
+        localStorage.setItem('myTeam', JSON.stringify(myTeam));
     }
 
     function renderTeam() {
         const list = document.getElementById('team-list');
-        list.innerHTML = myTeam.length ? "" : "<p>Đội hình trống</p>";
-        myTeam.forEach(p => {
-            list.innerHTML += `
-                <div class="card">
-                    <img src="${p.img}">
-                    <p>${p.name}<br>${p.season}</p>
-                </div>
-            `;
-        });
+        list.innerHTML = myTeam.map((p, index) => `
+            <div class="card">
+                <p>${p.name}<br><span class="lvl">+${p.lvl}</span></p>
+            </div>
+        `).join('');
     }
 
-    function buy(id) {
-        const p = players.find(x => x.id === id);
-        if (balance >= p.price) {
-            balance -= p.price;
-            myTeam.push(p);
-            localStorage.setItem('myTeam', JSON.stringify(myTeam));
-            document.getElementById('balance').innerText = `BP: ${balance.toLocaleString()}`;
-            alert("Đã chiêu mộ thành công!");
-        } else {
-            alert("Không đủ BP!");
-        }
+    function populateUpgrade() {
+        const main = document.getElementById('select-main');
+        main.innerHTML = myTeam.map((p, i) => `<option value="${i}">${p.name} (+${p.lvl})</option>`);
     }
 
-    renderShop();
+    function upgradePlayer() {
+        const idx = document.getElementById('select-main').value;
+        let p = myTeam[idx];
+        
+        // Hoạt ảnh giả lập
+        document.getElementById('upgrade-status').innerText = "Đang đập thẻ...";
+        
+        setTimeout(() => {
+            if (p.lvl < 13) {
+                // Tỉ lệ 100% thành công theo yêu cầu
+                p.lvl += 1;
+                document.getElementById('upgrade-status').innerText = "Thành công! Lên +" + p.lvl;
+            } else {
+                // Giả lập rớt ngẫu nhiên (ví dụ từ +13 rớt xuống ngẫu nhiên từ +1 đến +10)
+                let drop = Math.floor(Math.random() * 10) + 1;
+                p.lvl = drop;
+                document.getElementById('upgrade-status').innerText = "Xịt! Rớt xuống +" + drop;
+            }
+            renderTeam();
+            populateUpgrade();
+        }, 1000);
+    }
+
+    // Khởi tạo
+    updateUI();
+    renderTeam();
 </script>
 </body>
 </html>
